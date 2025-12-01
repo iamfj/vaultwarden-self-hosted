@@ -1,0 +1,42 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:${VAULTWARDEN_VERSION:-latest}
+    restart: unless-stopped
+    networks:
+      - shared_network
+    env_file:
+      - .env
+    environment:
+      DOMAIN: https://${SUBDOMAIN}.${DOMAIN_NAME}
+      WEBSOCKET_ENABLED: true
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - ./data/vaultwarden:/data
+
+  caddy:
+    image: caddy:${CADDY_VERSION:-latest}
+    restart: unless-stopped
+    networks:
+      - shared_network
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME}
+      SUBDOMAIN: ${SUBDOMAIN}
+      SSL_EMAIL: ${SSL_EMAIL}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://127.0.0.1:2019/metrics"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./config/Caddyfile:/etc/caddy/Caddyfile
+      - ./data/caddy:/data
+
+networks:
+  shared_network:
+    name: shared_network
+    driver: bridge
+    external: true

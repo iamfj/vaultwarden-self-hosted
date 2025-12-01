@@ -1,0 +1,19 @@
+# Email for SSL Let's Encrypt.
+{
+	email {$SSL_EMAIL}
+	log {
+		level WARN
+		format console
+	}
+}
+
+# Matrix service.
+{$SUBDOMAIN}.{$DOMAIN_NAME} {
+	# Prevents search engines from indexing this site.
+	header X-Robots-Tag "noindex, nofollow"
+
+    # Leite den gesamten restlichen Traffic an den Synapse-Container weiter.
+    reverse_proxy vaultwarden:80 {
+        header_up X-Real-IP {remote_host}
+    }
+}
